@@ -110,15 +110,54 @@ class YahooFinanceService {
     }
 
     checkProhibitedActivities(assetProfile) {
-        if (!assetProfile || !assetProfile.sector || !assetProfile.industry) return false;
+        if (!assetProfile) return false;
 
-        const industry = (assetProfile.industry + ' ' + assetProfile.sector).toLowerCase();
-        const prohibited = [
+        const industry = ((assetProfile.industry || '') + ' ' + (assetProfile.sector || '')).toLowerCase();
+        const companyName = (assetProfile.longBusinessSummary || '').toLowerCase();
+
+        // Check industry/sector keywords
+        const prohibitedKeywords = [
             'alcohol', 'tobacco', 'gambling', 'casino', 'gaming',
-            'bank', 'insurance', 'financial services', 'pork', 'adult', 'defense'
+            'bank', 'insurance', 'financial services', 'adult', 'defense',
+            'brewery', 'distillery', 'wine', 'beer', 'liquor'
         ];
 
-        return prohibited.some(term => industry.includes(term));
+        if (prohibitedKeywords.some(term => industry.includes(term))) {
+            return true;
+        }
+
+        // Check business description for prohibited activities
+        const prohibitedInDescription = [
+            'alcohol', 'alcoholic beverages', 'wine', 'beer', 'liquor',
+            'pork', 'pork products', 'ham', 'bacon',
+            'gambling', 'casino', 'lottery',
+            'tobacco', 'cigarette', 'cigar'
+        ];
+
+        if (prohibitedInDescription.some(term => companyName.includes(term))) {
+            return true;
+        }
+
+        // Specific retailers/wholesalers known to sell alcohol and/or pork
+        // These companies have significant revenue from haram products
+        const retailersWithHaramProducts = [
+            'COST',  // Costco - sells alcohol and pork (~10% revenue)
+            'WMT',   // Walmart - sells alcohol and pork
+            'TGT',   // Target - sells alcohol
+            'KR',    // Kroger - grocery with alcohol/pork
+            'ACI',   // Albertsons - grocery with alcohol/pork
+            'SYY',   // Sysco - food distributor with alcohol/pork
+            'UNFI',  // United Natural Foods - distributes alcohol
+            'GO',    // Grocery Outlet - sells alcohol
+            'INGR',  // Ingredion - may process pork products
+            'BJ',    // BJ's Wholesale - sells alcohol/pork
+            'VLGEA', // Village Super Market - sells alcohol
+            'WMK',   // Weis Markets - sells alcohol/pork
+            'SFM',   // Sprouts Farmers Market - sells alcohol
+            'IMKTA'  // Ingles Markets - sells alcohol/pork
+        ];
+
+        return retailersWithHaramProducts.includes(assetProfile.symbol?.toUpperCase());
     }
 
     // Check if stock is on blacklist
