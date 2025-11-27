@@ -1655,7 +1655,22 @@ async function searchStock(symbolOverride = null) {
         const response = await fetch(`${API_BASE_URL}/stocks/${symbol}`);
 
         if (!response.ok) {
-            // Try to get error message from response
+            // Fallback: Try searching by name/symbol if direct lookup failed
+            try {
+                const searchResponse = await fetch(`${API_BASE_URL}/stocks/search/${encodeURIComponent(symbol)}`);
+                if (searchResponse.ok) {
+                    const searchResults = await searchResponse.json();
+                    if (searchResults.length > 0) {
+                        // Found a match! Use the first one
+                        displayStockResult(searchResults[0]);
+                        return;
+                    }
+                }
+            } catch (searchError) {
+                console.error('Fallback search failed:', searchError);
+            }
+
+            // If fallback also failed, show original error
             const errorData = await response.json().catch(() => ({}));
             const errorMessage = errorData.message || `Failed to fetch data for ${symbol}`;
             throw new Error(errorMessage);

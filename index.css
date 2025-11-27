@@ -472,7 +472,7 @@ section {
     border-radius: var(--radius-full);
     padding: var(--spacing-sm);
     transition: all var(--transition-base);
-}
+`r`n    position: relative;}
 
 .search-box:focus-within {
     border-color: var(--primary-500);
