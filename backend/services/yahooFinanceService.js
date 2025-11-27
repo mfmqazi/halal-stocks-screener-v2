@@ -61,24 +61,10 @@ class YahooFinanceService {
 }
 
     // Search for stocks using Yahoo Finance API
-    async searchStocks(query) {
-    try {
-        const results = await yahooFinance.search(query, { quotesCount: 10, newsCount: 0 });
-
-        if (!results || !results.quotes) return [];
-
-        return results.quotes
-            .filter(quote => quote.isYahooFinance && quote.quoteType === 'EQUITY' || quote.quoteType === 'ETF')
-            .map(quote => ({
-                symbol: quote.symbol,
-                company: quote.longname || quote.shortname || quote.symbol,
-                exchange: quote.exchange,
-                type: quote.quoteType
-            }));
     } catch (error) {
-        console.error(`Error searching stocks for ${query}:`, error.message);
-        return [];
-    }
+    console.error(`Error searching stocks for ${query}:`, error.message);
+    return [];
+}
 }
 
 // Map Yahoo Finance sector to our sectors
