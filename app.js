@@ -1736,6 +1736,7 @@ function setupSearchDropdown() {
             if (!response.ok) throw new Error('Search failed');
 
             const results = await response.json();
+            console.log('Search results found:', results.length); // Debug log
 
             if (results.length > 0) {
                 dropdown.innerHTML = results.map(stock => `
