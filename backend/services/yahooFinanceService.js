@@ -33,7 +33,7 @@ class YahooFinanceService {
                 liquidAssetsRatio: this.calculateLiquidAssetsRatio(financialData, price),
                 receivablesRatio: this.calculateReceivablesRatio(financialData, price),
                 interestIncome: this.calculateInterestIncome(financialData),
-                prohibitedActivities: this.checkProhibitedActivities(assetProfile),
+                prohibitedActivities: this.checkProhibitedActivities(assetProfile, symbol.toUpperCase()),
                 complianceScore: 0 // Will be calculated after screening
             };
 
@@ -109,10 +109,10 @@ class YahooFinanceService {
         return 0.01;
     }
 
-    checkProhibitedActivities(assetProfile) {
-        if (!assetProfile) return false;
+    checkProhibitedActivities(assetProfile, symbol) {
+        if (!assetProfile && !symbol) return false;
 
-        const symbol = assetProfile.symbol?.toUpperCase() || '';
+        symbol = symbol || assetProfile?.symbol?.toUpperCase() || '';
         const industry = ((assetProfile.industry || '') + ' ' + (assetProfile.sector || '')).toLowerCase();
         const companyName = (assetProfile.longBusinessSummary || '').toLowerCase();
 
