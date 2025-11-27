@@ -1,4 +1,5 @@
 import Blacklist from '../models/Blacklist.js';
+import mongoose from 'mongoose';
 
 class BlacklistService {
     constructor() {
@@ -7,9 +8,10 @@ class BlacklistService {
             ETHICAL: new Set(),
             lastUpdated: null
         };
+        this.hardcodedData = null; // Store hardcoded data for in-memory mode
     }
 
-    // Initialize blacklist from hardcoded values (fallback)
+    // Initialize blacklist - works with or without database
     async initializeFromHardcoded() {
         const bdsCompanies = [
             // Tech & Cloud Services
@@ -92,8 +94,18 @@ class BlacklistService {
             { symbol: 'AFL', company: 'Aflac Inc.', reason: 'Conventional Insurance', category: 'other' }
         ];
 
+        // Store hardcoded data for in-memory mode
+        this.hardcodedData = { bds: bdsCompanies, ethical: ethicalCompanies };
+
+        // Check if MongoDB is connected
+        if (mongoose.connection.readyState !== 1) {
+            console.log('ℹ️  MongoDB not connected - using in-memory blacklist');
+            this.loadInMemoryCache();
+            return;
+        }
+
         try {
-            // Insert BDS companies
+            // Insert BDS companies to database
             for (const company of bdsCompanies) {
                 await Blacklist.findOneAndUpdate(
                     { type: 'BDS', symbol: company.symbol },
@@ -108,7 +120,7 @@ class BlacklistService {
                 );
             }
 
-            // Insert ethical companies
+            // Insert ethical companies to database
             for (const company of ethicalCompanies) {
                 await Blacklist.findOneAndUpdate(
                     { type: 'ETHICAL', symbol: company.symbol },
@@ -123,15 +135,42 @@ class BlacklistService {
                 );
             }
 
-            console.log('✅ Blacklist initialized from hardcoded values');
+            console.log('✅ Blacklist initialized in database');
             await this.refreshCache();
         } catch (error) {
-            console.error('❌ Error initializing blacklist:', error.message);
+            console.error('❌ Error initializing blacklist in database:', error.message);
+            console.log('ℹ️  Falling back to in-memory blacklist');
+            this.loadInMemoryCache();
         }
+    }
+
+    // Load blacklist into memory without database
+    loadInMemoryCache() {
+        if (!this.hardcodedData) return;
+
+        this.cache.BDS.clear();
+        this.cache.ETHICAL.clear();
+
+        this.hardcodedData.bds.forEach(item => {
+            this.cache.BDS.add(item.symbol);
+        });
+
+        this.hardcodedData.ethical.forEach(item => {
+            this.cache.ETHICAL.add(item.symbol);
+        });
+
+        this.cache.lastUpdated = new Date();
+        console.log(`✅ In-memory cache loaded: ${this.cache.BDS.size} BDS, ${this.cache.ETHICAL.size} Ethical`);
     }
 
     // Refresh in-memory cache from database
     async refreshCache() {
+        // If MongoDB not connected, use in-memory
+        if (mongoose.connection.readyState !== 1) {
+            this.loadInMemoryCache();
+            return;
+        }
+
         try {
             const blacklists = await Blacklist.find({ active: true });
 
@@ -147,9 +186,11 @@ class BlacklistService {
             });
 
             this.cache.lastUpdated = new Date();
-            console.log(`✅ Cache refreshed: ${this.cache.BDS.size} BDS, ${this.cache.ETHICAL.size} Ethical`);
+            console.log(`✅ Cache refreshed from database: ${this.cache.BDS.size} BDS, ${this.cache.ETHICAL.size} Ethical`);
         } catch (error) {
-            console.error('❌ Error refreshing cache:', error.message);
+            console.error('❌ Error refreshing cache from database:', error.message);
+            console.log('ℹ️  Using in-memory cache instead');
+            this.loadInMemoryCache();
         }
     }
 
@@ -170,8 +211,19 @@ class BlacklistService {
 
     // Get blacklist reason
     async getBlacklistReason(symbol) {
-        const item = await Blacklist.findOne({ symbol: symbol.toUpperCase(), active: true });
-        return item ? item.reason : null;
+        // If MongoDB not connected, return from hardcoded data
+        if (mongoose.connection.readyState !== 1 && this.hardcodedData) {
+            const allCompanies = [...this.hardcodedData.bds, ...this.hardcodedData.ethical];
+            const company = allCompanies.find(c => c.symbol === symbol.toUpperCase());
+            return company ? company.reason : null;
+        }
+
+        try {
+            const item = await Blacklist.findOne({ symbol: symbol.toUpperCase(), active: true });
+            return item ? item.reason : null;
+        } catch (error) {
+            return null;
+        }
     }
 
     // Get all blacklisted symbols
@@ -188,13 +240,11 @@ class BlacklistService {
         }
     }
 
-    // Manual update endpoint (for future API integration)
+    // Manual update endpoint
     async updateFromSource() {
         console.log('📡 Checking for blacklist updates...');
-        // TODO: Implement API call to fetch latest BDS list
-        // For now, just refresh from database
         await this.refreshCache();
-        return { success: true, message: 'Blacklist updated from database' };
+        return { success: true, message: 'Blacklist updated' };
     }
 }
 

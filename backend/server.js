@@ -18,15 +18,24 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB (optional for testing)
-connectDB().then(async () => {
-    // Initialize blacklist from database or hardcoded values
+
+// Connect to MongoDB (optional)
+connectDB().then(async (connection) => {
+    // Always initialize blacklist service (works with or without DB)
     await blacklistService.initializeFromHardcoded();
-    await blacklistService.refreshCache();
-    console.log('✅ Blacklist service initialized');
+
+    if (connection) {
+        console.log('✅ Running with database - full features enabled');
+    } else {
+        console.log('ℹ️  Running without database - stock screening still works!');
+    }
 }).catch(err => {
-    console.log('⚠️  Continuing without MongoDB. User features will be limited.');
+    console.log('⚠️  Database connection failed. Continuing without MongoDB.');
+    // Initialize blacklist in memory as fallback
+    blacklistService.initializeFromHardcoded();
 });
+
+
 
 // Trust proxy - required for Render and other reverse proxies
 app.set('trust proxy', 1);
