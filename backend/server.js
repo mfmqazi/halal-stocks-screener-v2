@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.js';
 import watchlistRoutes from './routes/watchlist.js';
 import testRoutes from './routes/test.js';
 import adminRoutes from './routes/admin.js';
+import statsRoutes from './routes/stats.js';
 import { connectDB } from './config/database.js';
 import { startCronJobs } from './jobs/cronJobs.js';
 import blacklistService from './services/blacklistService.js';
@@ -64,6 +65,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/watchlist', watchlistRoutes);
 app.use('/api/test', testRoutes); // Test routes (no database required)
 app.use('/api/admin', adminRoutes); // Admin routes for blacklist management
+app.use('/api/stats', statsRoutes); // Statistics endpoint
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
