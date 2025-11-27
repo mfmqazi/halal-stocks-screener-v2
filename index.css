@@ -472,7 +472,8 @@ section {
     border-radius: var(--radius-full);
     padding: var(--spacing-sm);
     transition: all var(--transition-base);
-`r`n    position: relative;}
+    position: relative;
+}
 
 .search-box:focus-within {
     border-color: var(--primary-500);
@@ -1222,6 +1223,7 @@ section {
     color: var(--neutral-400);
     font-size: 0.875rem;
 }
+
 .search-dropdown {
     position: absolute;
     top: 100%;
