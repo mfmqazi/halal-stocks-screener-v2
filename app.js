@@ -1622,13 +1622,22 @@ function changePage(direction) {
     }
 }
 
-async function searchStock() {
+async function searchStock(symbolOverride = null) {
     const searchInput = document.getElementById('stock-search');
-    const symbol = searchInput.value.trim().toUpperCase();
+    const symbol = symbolOverride || searchInput.value.trim().toUpperCase();
+
+    // Hide dropdown if open
+    const dropdown = document.getElementById('search-dropdown');
+    if (dropdown) dropdown.classList.add('hidden');
 
     if (!symbol) {
         alert('Please enter a stock or ETF symbol');
         return;
+    }
+
+    // Update input if symbol was passed directly
+    if (symbolOverride) {
+        searchInput.value = symbol;
     }
 
     // Show loading state
@@ -1663,12 +1672,74 @@ async function searchStock() {
                 <div style="color: var(--neutral-400); font-size: 0.875rem; margin-bottom: var(--spacing-md);">
                     ${error.message}
                 </div>
-                <div style="color: var(--neutral-500); font-size: 0.75rem);">
+                <div style="color: var(--neutral-500); font-size: 0.75rem;">
                     Tip: Make sure you're entering a valid stock or ETF ticker symbol (e.g., AAPL, TSLA, SPY)
                 </div>
             </div>
         `;
     }
+}
+
+// Search Dropdown Logic
+function setupSearchDropdown() {
+    const searchInput = document.getElementById('stock-search');
+    const dropdown = document.getElementById('search-dropdown');
+
+    if (!searchInput || !dropdown) return;
+
+    // Debounce function to limit API calls
+    const debounce = (func, wait) => {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    };
+
+    // Handle input changes
+    const handleInput = async (e) => {
+        const query = e.target.value.trim();
+
+        if (query.length < 2) {
+            dropdown.classList.add('hidden');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/stocks/search/${encodeURIComponent(query)}`);
+            if (!response.ok) throw new Error('Search failed');
+
+            const results = await response.json();
+
+            if (results.length > 0) {
+                dropdown.innerHTML = results.map(stock => `
+                    <div class="search-dropdown-item" onclick="searchStock('${stock.symbol}')">
+                        <span class="search-item-symbol">${stock.symbol}</span>
+                        <span class="search-item-company">${stock.company}</span>
+                    </div>
+                `).join('');
+                dropdown.classList.remove('hidden');
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+            dropdown.classList.add('hidden');
+        }
+    };
+
+    searchInput.addEventListener('input', debounce(handleInput, 300));
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
 }
 
 
@@ -1970,6 +2041,9 @@ function scrollToSection(sectionId) {
 
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize search dropdown
+    setupSearchDropdown();
+
     // Initialize stocks table
     displayStocks(1);
 

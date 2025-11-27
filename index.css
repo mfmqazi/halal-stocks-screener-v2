@@ -1174,3 +1174,51 @@ section {
     color: var(--neutral-400);
     font-style: italic;
 }
+
+/* Search Dropdown Styles */
+.search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--neutral-900);
+    border: 1px solid var(--neutral-700);
+    border-radius: var(--radius-md);
+    margin-top: var(--spacing-xs);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: var(--shadow-lg);
+}
+
+.search-dropdown.hidden {
+    display: none;
+}
+
+.search-dropdown-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--neutral-800);
+    transition: background-color var(--transition-fast);
+}
+
+.search-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.search-dropdown-item:hover {
+    background-color: var(--neutral-800);
+}
+
+.search-item-symbol {
+    font-weight: 600;
+    color: var(--primary-400);
+}
+
+.search-item-company {
+    color: var(--neutral-400);
+    font-size: 0.875rem;
+}
