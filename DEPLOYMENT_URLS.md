@@ -8,9 +8,10 @@
 The frontend is now deployed and accessible via GitHub Pages!
 
 ### Backend API
-**Status**: Not yet deployed
+**Status**: ✅ Deployed
+**URL**: https://halal-stocks-screener-v2.onrender.com/api
 
-To deploy the backend, you have several options:
+To deploy or update the backend, you have several options:
 
 #### Option 1: Render.com (Recommended)
 1. Go to https://render.com
@@ -50,6 +51,7 @@ git subtree push --prefix backend heroku master
 ## 🔗 Quick Links
 
 - **Live App**: https://mfmqazi.github.io/halal-stocks-screener-v2/
+- **Backend API**: https://halal-stocks-screener-v2.onrender.com/api
 - **Source Code**: https://github.com/mfmqazi/halal-stocks-screener-v2
 - **Issues**: https://github.com/mfmqazi/halal-stocks-screener-v2/issues
 - **README**: https://github.com/mfmqazi/halal-stocks-screener-v2#readme
@@ -57,10 +59,10 @@ git subtree push --prefix backend heroku master
 ## 📝 Notes
 
 - Frontend is fully deployed and functional
-- Backend needs to be deployed separately (see options above)
-- Once backend is deployed, update the API URL in `app.js`
+- Backend is deployed on Render.com
+- API URL in `app.js` is configured for production
 - No API keys required for Yahoo Finance! 🎉
 
 ---
 
-**Status**: ✅ Frontend Deployed | ⏳ Backend Pending
+**Status**: ✅ Frontend Deployed | ✅ Backend Deployed
