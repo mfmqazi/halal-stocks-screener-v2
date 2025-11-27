@@ -70,7 +70,7 @@ const stockSchema = new mongoose.Schema({
 });
 
 // Index for faster queries
-stockSchema.index({ symbol: 1 });
+// stockSchema.index({ symbol: 1 }); // Already indexed by unique: true
 stockSchema.index({ isCompliant: 1, complianceScore: -1 });
 stockSchema.index({ sector: 1 });
 
