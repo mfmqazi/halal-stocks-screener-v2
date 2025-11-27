@@ -1718,6 +1718,7 @@ function setupSearchDropdown() {
     // Handle input changes
     const handleInput = async (e) => {
         const query = e.target.value.trim();
+        console.log('Search input:', query); // Debug log
 
         if (query.length < 2) {
             dropdown.classList.add('hidden');
@@ -2058,6 +2059,9 @@ function scrollToSection(sectionId) {
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize search dropdown
     setupSearchDropdown();
+
+    // Load statistics
+    loadStatistics();
 
     // Initialize stocks table
     displayStocks(1);
