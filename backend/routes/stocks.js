@@ -7,6 +7,22 @@ const router = express.Router();
 // GET /api/stocks - Get all compliant stocks
 router.get('/', async (req, res) => {
     try {
+        const mongoose = await import('mongoose');
+
+        // If MongoDB not connected, return empty array with message
+        if (mongoose.default.connection.readyState !== 1) {
+            return res.json({
+                stocks: [],
+                message: 'Database not connected. Use the search feature to screen individual stocks.',
+                pagination: {
+                    page: 1,
+                    limit: 100,
+                    total: 0,
+                    pages: 0
+                }
+            });
+        }
+
         const { sector, sortBy, page = 1, limit = 100 } = req.query;
 
         // Build query
@@ -57,15 +73,49 @@ router.get('/', async (req, res) => {
 router.get('/:symbol', async (req, res) => {
     try {
         const { symbol } = req.params;
+        const mongoose = await import('mongoose');
 
         console.log(`📊 Fetching stock data for: ${symbol}`);
 
-        // Try to get from database first
-        let stock = await Stock.findOne({ symbol: symbol.toUpperCase() });
+        let stock = null;
 
-        // If not in database or outdated (> 1 hour), fetch from Yahoo Finance
-        if (!stock || (Date.now() - stock.lastUpdated > 3600000)) {
-            console.log(`🔄 Fetching fresh data from Yahoo Finance for ${symbol}`);
+        // Only try database if MongoDB is connected
+        if (mongoose.default.connection.readyState === 1) {
+            // Try to get from database first
+            stock = await Stock.findOne({ symbol: symbol.toUpperCase() });
+
+            // If not in database or outdated (> 1 hour), fetch from Yahoo Finance
+            if (!stock || (Date.now() - stock.lastUpdated > 3600000)) {
+                console.log(`🔄 Fetching fresh data from Yahoo Finance for ${symbol}`);
+
+                const stockData = await yahooFinanceService.getStockData(symbol.toUpperCase());
+
+                if (!stockData) {
+                    console.error(`❌ Yahoo Finance returned no data for ${symbol}`);
+                    return res.status(404).json({
+                        error: 'Symbol not found',
+                        message: `Unable to fetch data for "${symbol}". Please verify it's a valid ticker.`,
+                        symbol: symbol.toUpperCase(),
+                        suggestion: 'Try searching for US-listed stocks like AAPL, TSLA, or ETFs like SPY, VOO'
+                    });
+                }
+
+                const screenedData = yahooFinanceService.screenStock(stockData);
+
+                // Update or create in database
+                stock = await Stock.findOneAndUpdate(
+                    { symbol: symbol.toUpperCase() },
+                    { ...screenedData, lastUpdated: Date.now() },
+                    { upsert: true, new: true }
+                );
+
+                console.log(`✅ Successfully fetched and screened ${symbol}`);
+            } else {
+                console.log(`📦 Using cached data for ${symbol}`);
+            }
+        } else {
+            // No database - fetch directly from Yahoo Finance
+            console.log(`🔄 No database connection - fetching directly from Yahoo Finance for ${symbol}`);
 
             const stockData = await yahooFinanceService.getStockData(symbol.toUpperCase());
 
@@ -79,18 +129,8 @@ router.get('/:symbol', async (req, res) => {
                 });
             }
 
-            const screenedData = yahooFinanceService.screenStock(stockData);
-
-            // Update or create in database
-            stock = await Stock.findOneAndUpdate(
-                { symbol: symbol.toUpperCase() },
-                { ...screenedData, lastUpdated: Date.now() },
-                { upsert: true, new: true }
-            );
-
-            console.log(`✅ Successfully fetched and screened ${symbol}`);
-        } else {
-            console.log(`📦 Using cached data for ${symbol}`);
+            stock = yahooFinanceService.screenStock(stockData);
+            console.log(`✅ Successfully fetched and screened ${symbol} (no caching)`);
         }
 
         res.json(stock);
