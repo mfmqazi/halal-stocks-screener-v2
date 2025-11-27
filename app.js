@@ -2104,9 +2104,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                animateValue('total-stocks', 0, 2847, 2000);
-                animateValue('compliant-stocks', 0, 1234, 2000);
-                animateValue('ethical-stocks', 0, 892, 2000);
+                // Fetch real stats from API instead of hardcoded values
+                loadStatistics();
                 observer.unobserve(entry.target);
             }
         });
