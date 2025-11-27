@@ -179,22 +179,17 @@ class YahooFinanceService {
             issues.push('Company on BDS or ethical blacklist');
         }
 
-        // Check debt ratio (should be < 33%)
-        if (stockData.debtRatio > 0.33) {
-            issues.push('Debt ratio exceeds 33%');
+        // AAOIFI: Interest-bearing debt must be ≤ 30% of market cap
+        if (stockData.debtRatio > 0.30) {
+            issues.push(`Interest-bearing debt ${(stockData.debtRatio * 100).toFixed(1)}% exceeds 30% (AAOIFI)`);
         }
 
-        // Check liquid assets ratio (should be < 33%)
-        if (stockData.liquidAssetsRatio > 0.33) {
-            issues.push('Liquid assets ratio exceeds 33%');
+        // AAOIFI: Interest-earning assets must be ≤ 30% of market cap
+        if (stockData.liquidAssetsRatio > 0.30) {
+            issues.push(`Liquid assets ${(stockData.liquidAssetsRatio * 100).toFixed(1)}% exceed 30% (AAOIFI)`);
         }
 
-        // Check receivables ratio (should be < 49%)
-        if (stockData.receivablesRatio > 0.49) {
-            issues.push('Receivables ratio exceeds 49%');
-        }
-
-        // Check interest income (should be < 5%)
+        // AAOIFI: Non-permissible income must be ≤ 5% of total revenue
         if (stockData.interestIncome > 0.05) {
             issues.push('Interest income exceeds 5%');
         }
@@ -215,7 +210,10 @@ class YahooFinanceService {
             ...stockData,
             isCompliant,
             issues,
-            complianceScore: score
+            complianceScore: score,
+            methodology: 'AAOIFI Shariah Standard 21',
+            purificationRequired: isCompliant && stockData.interestIncome > 0,
+            purificationPercentage: stockData.interestIncome
         };
     }
 
