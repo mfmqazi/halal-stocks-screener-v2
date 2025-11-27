@@ -38,28 +38,34 @@ async function loadStatistics() {
 }
 
 // Animate number counting
-function animateValue(obj, start, end, duration) {
-    if (start === end) return;
+function animateValue(idOrElement, start, end, duration) {
+    let obj = idOrElement;
+    if (typeof idOrElement === 'string') {
+        obj = document.getElementById(idOrElement);
+    }
+    if (!obj) return;
+
+    if (start === end) {
+        obj.textContent = end.toLocaleString();
+        return;
+    }
+
     let startTimestamp = null;
     const step = (timestamp) => {
         if (!startTimestamp) startTimestamp = timestamp;
         const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+        obj.textContent = Math.floor(progress * (end - start) + start).toLocaleString();
         if (progress < 1) {
             window.requestAnimationFrame(step);
         } else {
-            obj.innerHTML = end.toLocaleString();
+            obj.textContent = end.toLocaleString();
         }
     };
     window.requestAnimationFrame(step);
 }
 
 // Load stats on page load
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadStatistics);
-} else {
-    loadStatistics();
-}
+
 
 // Refresh stats every 5 minutes
 setInterval(loadStatistics, 5 * 60 * 1000);
@@ -2111,21 +2117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-function animateValue(id, start, end, duration) {
-    const element = document.getElementById(id);
-    const range = end - start;
-    const increment = range / (duration / 16);
-    let current = start;
 
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= end) {
-            current = end;
-            clearInterval(timer);
-        }
-        element.textContent = Math.floor(current).toLocaleString();
-    }, 16);
-}
 
 // Active nav link on scroll
 window.addEventListener('scroll', () => {
