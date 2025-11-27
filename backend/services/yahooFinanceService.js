@@ -18,6 +18,22 @@ class YahooFinanceService {
 
             const { price, summaryDetail, financialData, defaultKeyStatistics, assetProfile } = result;
 
+            // Handle currency conversion for ADRs (e.g., TSM)
+            // Financial data might be in local currency (e.g., TWD) while price is in USD
+            let exchangeRate = 1;
+            if (financialData?.financialCurrency && price?.currency && financialData.financialCurrency !== price.currency) {
+                try {
+                    const pair = `${financialData.financialCurrency}${price.currency}=X`; // e.g., TWDUSD=X
+                    const rateData = await yahooFinance.quote(pair);
+                    if (rateData && rateData.regularMarketPrice) {
+                        exchangeRate = rateData.regularMarketPrice;
+                        console.log(`💱 Converting ${financialData.financialCurrency} to ${price.currency} at rate ${exchangeRate}`);
+                    }
+                } catch (e) {
+                    console.warn(`⚠️ Could not fetch exchange rate for ${financialData.financialCurrency}/${price.currency}`);
+                }
+            }
+
             // Map Yahoo Finance data to our format
             return {
                 symbol: symbol.toUpperCase(),
@@ -29,9 +45,9 @@ class YahooFinanceService {
                 volume: summaryDetail?.volume ? this.formatVolume(summaryDetail.volume) : 'N/A',
 
                 // Financial metrics for Shariah screening
-                debtRatio: this.calculateDebtRatio(financialData, defaultKeyStatistics),
-                liquidAssetsRatio: this.calculateLiquidAssetsRatio(financialData, price),
-                receivablesRatio: this.calculateReceivablesRatio(financialData, price),
+                debtRatio: this.calculateDebtRatio(financialData, defaultKeyStatistics, price, exchangeRate),
+                liquidAssetsRatio: this.calculateLiquidAssetsRatio(financialData, price, exchangeRate),
+                receivablesRatio: this.calculateReceivablesRatio(financialData, price, exchangeRate),
                 interestIncome: this.calculateInterestIncome(financialData),
                 prohibitedActivities: this.checkProhibitedActivities(assetProfile, symbol.toUpperCase()),
                 complianceScore: 0 // Will be calculated after screening
@@ -68,36 +84,33 @@ class YahooFinanceService {
     }
 
     // Calculate financial ratios for Shariah screening
-    calculateDebtRatio(financialData, defaultKeyStatistics) {
+    calculateDebtRatio(financialData, defaultKeyStatistics, price, exchangeRate = 1) {
         // Total Debt / Market Cap
         // Yahoo provides totalDebt directly in financialData
-        const totalDebt = financialData?.totalDebt || 0;
-        const marketCap = defaultKeyStatistics?.enterpriseValue || 1; // Using EV as proxy if marketCap missing, or just use price.marketCap
+        let totalDebt = financialData?.totalDebt || 0;
 
-        // Better to use market cap from price module if available, passed in context? 
-        // Let's assume marketCap is passed or available. 
-        // Actually, let's use the one from the result object if we can access it, but here we only have modules.
-        // financialData has currentPrice and totalDebt. 
-        // defaultKeyStatistics has enterpriseValue.
+        // Convert debt to same currency as market cap if needed
+        totalDebt = totalDebt * exchangeRate;
 
-        // Let's try to be robust.
+        const marketCap = price?.marketCap || defaultKeyStatistics?.enterpriseValue || 1;
+
         return totalDebt / (marketCap || 1);
     }
 
-    calculateLiquidAssetsRatio(financialData, price) {
+    calculateLiquidAssetsRatio(financialData, price, exchangeRate = 1) {
         // (Cash + Marketable Securities) / Market Cap
-        const cash = financialData?.totalCash || 0;
+        let cash = financialData?.totalCash || 0;
+
+        // Convert cash to same currency as market cap
+        cash = cash * exchangeRate;
+
         const marketCap = price?.marketCap || 1;
         return cash / marketCap;
     }
 
-    calculateReceivablesRatio(financialData, price) {
+    calculateReceivablesRatio(financialData, price, exchangeRate = 1) {
         // Accounts Receivable / Market Cap
-        // Yahoo doesn't always provide receivables in these modules easily without balance sheet.
-        // We might need 'balanceSheetHistory' or similar.
-        // For now, let's estimate or use 0 if not available, or try to fetch more modules.
-        // 'financialData' doesn't have receivables.
-        // Let's assume 0 for now to avoid breaking, or use a conservative estimate.
+        // Not used in AAOIFI Standard 21, but kept for reference
         return 0;
     }
 

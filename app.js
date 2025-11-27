@@ -1,5 +1,45 @@
 // API Configuration
-const API_BASE_URL = 'https://halal-stocks-screener-2.onrender.com/api';
+const API_BASE_URL = 'https://halal-stocks-screener-v2.onrender.com/api';
+
+// Load statistics from MongoDB
+async function loadStatistics() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/stats`);
+        const stats = await response.json();
+
+        // Update stats display
+        const stocksEl = document.getElementById('total-stocks');
+        const compliantEl = document.getElementById('compliant-stocks');
+        const ethicalEl = document.getElementById('ethical-stocks');
+
+        if (stocksEl && stats.stocksAnalyzed !== undefined) {
+            stocksEl.textContent = stats.stocksAnalyzed.toLocaleString();
+        }
+
+        if (compliantEl && stats.shariahCompliant !== undefined) {
+            compliantEl.textContent = stats.shariahCompliant.toLocaleString();
+        }
+
+        if (ethicalEl && stats.ethicallyScreened !== undefined) {
+            ethicalEl.textContent = stats.ethicallyScreened.toLocaleString();
+        }
+
+        console.log('✅ Statistics loaded:', stats);
+    } catch (error) {
+        console.error('❌ Failed to load statistics:', error);
+        // Keep default numbers if API fails
+    }
+}
+
+// Load stats on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadStatistics);
+} else {
+    loadStatistics();
+}
+
+// Refresh stats every 5 minutes
+setInterval(loadStatistics, 5 * 60 * 1000);
 
 // BDS List - Companies to exclude (supporting Israeli occupation/genocide)
 // Source: BDS Movement (bdsmovement.net) - Updated 2024/2025
