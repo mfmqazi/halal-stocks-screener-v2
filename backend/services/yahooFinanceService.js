@@ -112,8 +112,62 @@ class YahooFinanceService {
     checkProhibitedActivities(assetProfile) {
         if (!assetProfile) return false;
 
+        const symbol = assetProfile.symbol?.toUpperCase() || '';
         const industry = ((assetProfile.industry || '') + ' ' + (assetProfile.sector || '')).toLowerCase();
         const companyName = (assetProfile.longBusinessSummary || '').toLowerCase();
+
+        // NON-COMPLIANT ETFs and Index Funds
+        // Most broad-market ETFs hold banks, insurance, alcohol, etc.
+        const nonCompliantETFs = [
+            // S&P 500 ETFs (hold banks, insurance, alcohol companies)
+            'SPY',   // SPDR S&P 500 ETF - holds JPM, BAC, C, etc.
+            'VOO',   // Vanguard S&P 500 ETF
+            'IVV',   // iShares Core S&P 500 ETF
+
+            // Total Market ETFs
+            'VTI',   // Vanguard Total Stock Market ETF
+            'ITOT',  // iShares Core S&P Total US Stock Market ETF
+            'SCHB',  // Schwab US Broad Market ETF
+
+            // Dow Jones ETFs
+            'DIA',   // SPDR Dow Jones Industrial Average ETF
+
+            // NASDAQ ETFs
+            'QQQ',   // Invesco QQQ (Nasdaq-100)
+            'ONEQ',  // Fidelity Nasdaq Composite Index ETF
+
+            // Russell ETFs
+            'IWM',   // iShares Russell 2000 ETF
+            'IWB',   // iShares Russell 1000 ETF
+            'IWF',   // iShares Russell 1000 Growth ETF
+            'IWD',   // iShares Russell 1000 Value ETF
+
+            // International/Global ETFs
+            'VEA',   // Vanguard FTSE Developed Markets ETF
+            'VWO',   // Vanguard FTSE Emerging Markets ETF
+            'EFA',   // iShares MSCI EAFE ETF
+            'IEFA',  // iShares Core MSCI EAFE ETF
+            'ACWI',  // iShares MSCI ACWI ETF
+
+            // Sector ETFs with prohibited holdings
+            'XLF',   // Financial Select Sector SPDR (banks/insurance)
+            'VFH',   // Vanguard Financials ETF
+            'KBE',   // SPDR S&P Bank ETF
+            'IAI',   // iShares US Broker-Dealers & Securities Exchanges ETF
+
+            // Bond ETFs (interest-based)
+            'AGG',   // iShares Core US Aggregate Bond ETF
+            'BND',   // Vanguard Total Bond Market ETF
+            'LQD',   // iShares iBoxx Investment Grade Corporate Bond ETF
+            'HYG',   // iShares iBoxx High Yield Corporate Bond ETF
+            'TLT',   // iShares 20+ Year Treasury Bond ETF
+            'SHY',   // iShares 1-3 Year Treasury Bond ETF
+            'IEF',   // iShares 7-10 Year Treasury Bond ETF
+        ];
+
+        if (nonCompliantETFs.includes(symbol)) {
+            return true;
+        }
 
         // Check industry/sector keywords
         const prohibitedKeywords = [
@@ -139,7 +193,6 @@ class YahooFinanceService {
         }
 
         // Specific retailers/wholesalers known to sell alcohol and/or pork
-        // These companies have significant revenue from haram products
         const retailersWithHaramProducts = [
             'COST',  // Costco - sells alcohol and pork (~10% revenue)
             'WMT',   // Walmart - sells alcohol and pork
@@ -154,10 +207,13 @@ class YahooFinanceService {
             'VLGEA', // Village Super Market - sells alcohol
             'WMK',   // Weis Markets - sells alcohol/pork
             'SFM',   // Sprouts Farmers Market - sells alcohol
-            'IMKTA'  // Ingles Markets - sells alcohol/pork
+            'IMKTA', // Ingles Markets - sells alcohol/pork
+            'TSN',   // Tyson Foods - pork processor
+            'HRL',   // Hormel - pork products (Spam, bacon)
+            'PPC',   // Pilgrim's Pride - chicken AND pork
         ];
 
-        return retailersWithHaramProducts.includes(assetProfile.symbol?.toUpperCase());
+        return retailersWithHaramProducts.includes(symbol);
     }
 
     // Check if stock is on blacklist
