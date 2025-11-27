@@ -1,20 +1,18 @@
 
 services:
   - type: web
-    name: halal-stocks-api
+    name: halal-stocks-api-v2
     env: node
     plan: free
-    buildCommand: npm install --prefix backend
-    startCommand: npm start --prefix backend
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: FINNHUB_API_KEY
-        value: "d4ivv2hr01queuakrd5gdv2hr01queuakrd60"
       - key: MONGODB_URI
-        value: "mongodb+srv://mfmqazi_db_user:3nbRpCxvJQS9SMK0@cluster0.17odlwh.mongodb.net/halal-stocks?retryWrites=true&w=majority"
+        sync: false
       - key: JWT_SECRET
-        value: "halal_stocks_super_secret_jwt_key_2025_change_in_production"
+        sync: false
       - key: RATE_LIMIT_WINDOW_MS
         value: "900000"
       - key: RATE_LIMIT_MAX_REQUESTS
