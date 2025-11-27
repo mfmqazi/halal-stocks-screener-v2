@@ -84,53 +84,47 @@ router.get('/:symbol', async (req, res) => {
             // Try to get from database first
             stock = await Stock.findOne({ symbol: symbol.toUpperCase() });
 
-            // If not in database or outdated (> 1 hour), fetch from Yahoo Finance
-            if (!stock || (Date.now() - stock.lastUpdated > 3600000)) {
-                console.log(`🔄 Fetching fresh data from Yahoo Finance for ${symbol}`);
-
-                const stockData = await yahooFinanceService.getStockData(symbol.toUpperCase());
-
-                if (!stockData) {
-                    console.error(`❌ Yahoo Finance returned no data for ${symbol}`);
-                    return res.status(404).json({
-                        error: 'Symbol not found',
-                        message: `Unable to fetch data for "${symbol}". Please verify it's a valid ticker.`,
-                        symbol: symbol.toUpperCase(),
-                        suggestion: 'Try searching for US-listed stocks like AAPL, TSLA, or ETFs like SPY, VOO'
-                    });
+            // Check if data is stale (older than 24 hours)
+            if (stock) {
+                const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                if (stock.updatedAt < oneDayAgo) {
+                    console.log(`🔄 Data for ${symbol} is stale (older than 24h). Re-fetching...`);
+                    stock = null; // Force re-fetch
+                } else {
+                    console.log(`✅ Using cached data for ${symbol}`);
                 }
-
-                const screenedData = yahooFinanceService.screenStock(stockData);
-
-                // Update or create in database
-                stock = await Stock.findOneAndUpdate(
-                    { symbol: symbol.toUpperCase() },
-                    { ...screenedData, lastUpdated: Date.now() },
-                    { upsert: true, new: true }
-                );
-
-                console.log(`✅ Successfully fetched and screened ${symbol}`);
-            } else {
-                console.log(`📦 Using cached data for ${symbol}`);
             }
         } else {
-            // No database - fetch directly from Yahoo Finance
-            console.log(`🔄 No database connection - fetching directly from Yahoo Finance for ${symbol}`);
+            console.log('⚠️ MongoDB not connected. Skipping cache check.');
+        }
 
-            const stockData = await yahooFinanceService.getStockData(symbol.toUpperCase());
+        if (stock) {
+            return res.json(stock);
+        }
 
-            if (!stockData) {
-                console.error(`❌ Yahoo Finance returned no data for ${symbol}`);
-                return res.status(404).json({
-                    error: 'Symbol not found',
-                    message: `Unable to fetch data for "${symbol}". Please verify it's a valid ticker.`,
-                    symbol: symbol.toUpperCase(),
-                    suggestion: 'Try searching for US-listed stocks like AAPL, TSLA, or ETFs like SPY, VOO'
-                });
-            }
+        // If not in DB or stale, fetch from Yahoo Finance
+        console.log(`🌍 Fetching fresh data from Yahoo Finance for ${symbol}`);
+        const stockData = await yahooFinanceService.getStockData(symbol.toUpperCase());
 
-            stock = yahooFinanceService.screenStock(stockData);
-            console.log(`✅ Successfully fetched and screened ${symbol} (no caching)`);
+        if (!stockData) {
+            return res.status(404).json({
+                error: 'Symbol not found',
+                message: `Unable to fetch data for "${symbol}". Please verify it's a valid ticker.`
+            });
+        }
+
+        const screenedData = yahooFinanceService.screenStock(stockData);
+
+        // Save to DB if connected
+        if (mongoose.default.connection.readyState === 1) {
+            stock = await Stock.findOneAndUpdate(
+                { symbol: symbol.toUpperCase() },
+                { ...screenedData, lastUpdated: Date.now() },
+                { upsert: true, new: true }
+            );
+            console.log(`💾 Saved ${symbol} to database`);
+        } else {
+            stock = screenedData;
         }
 
         res.json(stock);
@@ -144,10 +138,11 @@ router.get('/:symbol', async (req, res) => {
     }
 });
 
-// POST /api/stocks/refresh - Manually refresh stock data
+// POST /api/stocks/refresh/:symbol - Manually refresh stock data
 router.post('/refresh/:symbol', async (req, res) => {
     try {
         const { symbol } = req.params;
+        const mongoose = await import('mongoose');
 
         const stockData = await yahooFinanceService.getStockData(symbol.toUpperCase());
 
@@ -157,11 +152,14 @@ router.post('/refresh/:symbol', async (req, res) => {
 
         const screenedData = yahooFinanceService.screenStock(stockData);
 
-        const stock = await Stock.findOneAndUpdate(
-            { symbol: symbol.toUpperCase() },
-            { ...screenedData, lastUpdated: Date.now() },
-            { upsert: true, new: true }
-        );
+        let stock = screenedData;
+        if (mongoose.default.connection.readyState === 1) {
+            stock = await Stock.findOneAndUpdate(
+                { symbol: symbol.toUpperCase() },
+                { ...screenedData, lastUpdated: Date.now() },
+                { upsert: true, new: true }
+            );
+        }
 
         res.json({ message: 'Stock refreshed successfully', stock });
     } catch (error) {
