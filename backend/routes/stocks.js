@@ -172,12 +172,39 @@ router.get('/search/:query', async (req, res) => {
     try {
         const { query } = req.params;
 
-        const stocks = await Stock.find({
+        // 1. Search local DB first
+        let stocks = await Stock.find({
             $or: [
                 { symbol: { $regex: query, $options: 'i' } },
                 { company: { $regex: query, $options: 'i' } }
             ]
-        }).limit(10);
+        }).limit(5).select('symbol company sector complianceScore isCompliant');
+
+        // 2. If few results, search Yahoo Finance
+        if (stocks.length < 5) {
+            try {
+                const yahooResults = await yahooFinanceService.searchStocks(query);
+
+                // Filter out duplicates (already in DB)
+                const existingSymbols = new Set(stocks.map(s => s.symbol));
+
+                const newResults = yahooResults
+                    .filter(r => !existingSymbols.has(r.symbol))
+                    .slice(0, 5 - stocks.length)
+                    .map(r => ({
+                        symbol: r.symbol,
+                        company: r.company,
+                        sector: 'Unknown', // Will be fetched on detail view
+                        complianceScore: null, // Not screened yet
+                        isCompliant: null // Not screened yet
+                    }));
+
+                stocks = [...stocks, ...newResults];
+            } catch (yahooError) {
+                console.error('Yahoo search failed:', yahooError);
+                // Continue with just local results
+            }
+        }
 
         res.json(stocks);
     } catch (error) {
