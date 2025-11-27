@@ -3,9 +3,17 @@ const API_BASE_URL = 'https://halal-stocks-screener-v2.onrender.com/api';
 
 // Load statistics from MongoDB
 async function loadStatistics() {
+    console.log('🔄 Fetching statistics...');
     try {
-        const response = await fetch(`${API_BASE_URL}/stats`);
+        // Add timestamp to prevent caching
+        const response = await fetch(`${API_BASE_URL}/stats?t=${Date.now()}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const stats = await response.json();
+        console.log('📊 Stats received:', stats);
 
         // Update stats display
         const stocksEl = document.getElementById('total-stocks');
@@ -13,22 +21,37 @@ async function loadStatistics() {
         const ethicalEl = document.getElementById('ethical-stocks');
 
         if (stocksEl && stats.stocksAnalyzed !== undefined) {
-            stocksEl.textContent = stats.stocksAnalyzed.toLocaleString();
+            animateValue(stocksEl, parseInt(stocksEl.textContent.replace(/,/g, '') || 0), stats.stocksAnalyzed, 1000);
         }
 
         if (compliantEl && stats.shariahCompliant !== undefined) {
-            compliantEl.textContent = stats.shariahCompliant.toLocaleString();
+            animateValue(compliantEl, parseInt(compliantEl.textContent.replace(/,/g, '') || 0), stats.shariahCompliant, 1000);
         }
 
         if (ethicalEl && stats.ethicallyScreened !== undefined) {
-            ethicalEl.textContent = stats.ethicallyScreened.toLocaleString();
+            animateValue(ethicalEl, parseInt(ethicalEl.textContent.replace(/,/g, '') || 0), stats.ethicallyScreened, 1000);
         }
 
-        console.log('✅ Statistics loaded:', stats);
     } catch (error) {
         console.error('❌ Failed to load statistics:', error);
-        // Keep default numbers if API fails
     }
+}
+
+// Animate number counting
+function animateValue(obj, start, end, duration) {
+    if (start === end) return;
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            obj.innerHTML = end.toLocaleString();
+        }
+    };
+    window.requestAnimationFrame(step);
 }
 
 // Load stats on page load
