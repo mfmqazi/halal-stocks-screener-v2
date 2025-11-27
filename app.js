@@ -21,15 +21,15 @@ async function loadStatistics() {
         const ethicalEl = document.getElementById('ethical-stocks');
 
         if (stocksEl && stats.stocksAnalyzed !== undefined) {
-            animateValue(stocksEl, parseInt(stocksEl.textContent.replace(/,/g, '') || 0), stats.stocksAnalyzed, 1000);
+            animateValue(stocksEl, parseInt(stocksEl.textContent.replace(/[^0-9]/g, '')) || 0, stats.stocksAnalyzed, 1000);
         }
 
         if (compliantEl && stats.shariahCompliant !== undefined) {
-            animateValue(compliantEl, parseInt(compliantEl.textContent.replace(/,/g, '') || 0), stats.shariahCompliant, 1000);
+            animateValue(compliantEl, parseInt(compliantEl.textContent.replace(/[^0-9]/g, '')) || 0, stats.shariahCompliant, 1000);
         }
 
         if (ethicalEl && stats.ethicallyScreened !== undefined) {
-            animateValue(ethicalEl, parseInt(ethicalEl.textContent.replace(/,/g, '') || 0), stats.ethicallyScreened, 1000);
+            animateValue(ethicalEl, parseInt(ethicalEl.textContent.replace(/[^0-9]/g, '')) || 0, stats.ethicallyScreened, 1000);
         }
 
     } catch (error) {
