@@ -1,64 +1,49 @@
-# Halal Stocks - Shariah Compliant Stock Screener
+# Halal Stocks Screener V2 🌙📈
 
-A comprehensive web application for screening stocks based on Shariah compliance and ethical investing principles, with a focus on excluding companies supporting the genocide in Palestine.
+**Version 2.0** - Now powered by **Yahoo Finance API** for broader coverage including mutual funds, ETFs, and international stocks!
 
-## Features
+A comprehensive Shariah-compliant stock screening application that helps Muslim investors identify halal investment opportunities. This version uses the `yahoo-finance2` library for enhanced data coverage.
 
-- ✅ **Shariah Compliance Screening** - AAOIFI standards-based screening
-- 🚫 **BDS Compliance** - Excludes companies supporting Israeli occupation
-- 📊 **Real-time Stock Data** - Powered by Finnhub API
-- 📈 **Top 100 Daily Rankings** - Updated automatically after market close
-- 👤 **User Accounts** - Personal watchlists and price alerts
-- 🔍 **Advanced Filtering** - By sector, compliance score, performance
-- 📱 **Responsive Design** - Works on all devices
+## 🆕 What's New in V2
 
-## Shariah Screening Criteria
+- **Yahoo Finance Integration**: Replaced Finnhub with Yahoo Finance for:
+  - Broader coverage (mutual funds, ETFs, international stocks)
+  - No API key required
+  - More comprehensive financial data
+  - Better reliability and uptime
 
-### Financial Ratios (AAOIFI Standards)
-- Debt Ratio < 33% of market cap
-- Liquid Assets < 33% of market cap
-- Accounts Receivable < 49% of market cap
-- Interest Income < 5% of total revenue
+- **Enhanced Screening**: Improved financial ratio calculations using Yahoo Finance's detailed data
+- **Faster Updates**: Reduced rate limiting delays (500ms vs 1200ms)
 
-### Prohibited Industries
-- Alcohol, tobacco, gambling
-- Conventional banking and insurance
-- Pork products
-- Adult entertainment
+## ✨ Features
 
-### Ethical Screening
-- BDS blacklist compliance
-- No support for Israeli occupation/genocide
-- Fair labor practices
-- Environmental responsibility
+### Core Functionality
+- **Shariah Compliance Screening**: Automated screening based on AAOIFI standards
+- **BDS Watchlist**: Track companies to boycott due to support for Israeli occupation/genocide
+- **Ethical Screening**: Filter out tobacco, alcohol, gambling, and conventional banking
+- **Real-time Data**: Live stock prices and financial metrics via Yahoo Finance
+- **Compliance Scoring**: 0-100 score based on multiple Shariah criteria
 
-## Tech Stack
+### Screening Criteria
+- ✅ Debt Ratio < 33%
+- ✅ Liquid Assets < 33%
+- ✅ Receivables < 49%
+- ✅ Interest Income < 5%
+- ✅ No prohibited activities (alcohol, tobacco, gambling, etc.)
+- ✅ Not on BDS or ethical blacklist
 
-### Frontend
-- HTML5, CSS3, JavaScript (Vanilla)
-- Modern glassmorphism design
-- Responsive and accessible
-
-### Backend
-- Node.js + Express
-- MongoDB for data storage
-- Finnhub API for real-time stock data
-- JWT authentication
-- Node-cron for scheduled updates
-
-## Installation
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 18+ and npm
-- MongoDB (local or Atlas)
-- Finnhub API key (free tier available)
+- Node.js 18+ 
+- MongoDB (optional, for user features)
 
-### Setup
+### Installation
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/yourusername/halal-stocks.git
-cd halal-stocks
+git clone https://github.com/mfmqazi/halal-stocks-screener-v2.git
+cd halal-stocks-screener-v2
 ```
 
 2. **Install backend dependencies**
@@ -70,140 +55,122 @@ npm install
 3. **Configure environment variables**
 ```bash
 cp .env.example .env
+# Edit .env with your MongoDB URI and JWT secret
 ```
 
-Edit `.env` and add your credentials:
-```env
-FINNHUB_API_KEY=your_api_key_here
-MONGODB_URI=mongodb://localhost:27017/halal-stocks
-JWT_SECRET=your_secret_key_here
-```
-
-4. **Start MongoDB** (if running locally)
+4. **Test the Yahoo Finance integration**
 ```bash
-mongod
+node test-api.js
 ```
 
-5. **Run the backend server**
+5. **Start the backend server**
 ```bash
+npm start
+# Or for development with auto-reload:
 npm run dev
 ```
 
 6. **Open the frontend**
-Open `index.html` in your browser or use a local server:
+Simply open `index.html` in your browser, or use a local server:
 ```bash
-# Using Python
-python -m http.server 3000
-
-# Using Node.js http-server
-npx http-server -p 3000
+# From the project root
+npx serve .
 ```
 
-## API Endpoints
+## 📁 Project Structure
+
+```
+prime-curiosity-v2/
+├── backend/
+│   ├── config/          # Database configuration
+│   ├── models/          # MongoDB schemas
+│   ├── routes/          # API endpoints
+│   ├── services/        # Business logic
+│   │   ├── yahooFinanceService.js  # Yahoo Finance integration
+│   │   └── blacklistService.js     # BDS/Ethical screening
+│   ├── jobs/            # Cron jobs for updates
+│   └── server.js        # Express server
+├── index.html           # Main frontend
+├── app.js              # Frontend logic
+└── index.css           # Styling
+```
+
+## 🔌 API Endpoints
 
 ### Stocks
 - `GET /api/stocks` - Get all compliant stocks
-- `GET /api/stocks/:symbol` - Get specific stock
-- `POST /api/stocks/refresh/:symbol` - Refresh stock data
-- `GET /api/stocks/search/:query` - Search stocks
+- `GET /api/stocks/:symbol` - Get specific stock data
+- `POST /api/stocks/refresh/:symbol` - Force refresh stock data
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
+### Testing
+- `GET /api/test/stock/:symbol` - Test Yahoo Finance API
+- `GET /api/test/health` - Health check
 
-### Watchlist (Protected)
-- `GET /api/watchlist` - Get user watchlist
-- `POST /api/watchlist/:symbol` - Add to watchlist
-- `DELETE /api/watchlist/:symbol` - Remove from watchlist
-- `POST /api/watchlist/alerts` - Create price alert
-- `GET /api/watchlist/alerts` - Get alerts
+### Admin
+- `GET /api/admin/blacklist` - Get BDS/Ethical lists
+- `POST /api/admin/blacklist/refresh` - Refresh blacklist cache
 
-## Deployment
+## 🌐 Deployment
 
-### Deploy to Heroku
+### Frontend (GitHub Pages)
+The frontend is automatically deployed to GitHub Pages from the `gh-pages` branch.
 
-1. **Create Heroku app**
+### Backend (Render.com)
+1. Create a new Web Service on Render
+2. Connect your GitHub repository
+3. Set environment variables:
+   - `MONGODB_URI`
+   - `JWT_SECRET`
+   - `NODE_ENV=production`
+4. Deploy!
+
+## 🛠️ Development
+
+### Testing Yahoo Finance Integration
 ```bash
-heroku create halal-stocks-api
+cd backend
+node test-api.js
 ```
 
-2. **Add MongoDB Atlas**
+### Running Locally
 ```bash
-heroku addons:create mongolab:sandbox
+# Terminal 1 - Backend
+cd backend
+npm run dev
+
+# Terminal 2 - Frontend (optional)
+npx serve .
 ```
 
-3. **Set environment variables**
-```bash
-heroku config:set FINNHUB_API_KEY=your_key
-heroku config:set JWT_SECRET=your_secret
-heroku config:set NODE_ENV=production
-```
+## 📊 Data Sources
 
-4. **Deploy**
-```bash
-git push heroku main
-```
+- **Stock Data**: Yahoo Finance (via yahoo-finance2)
+- **BDS List**: BDS Movement (bdsmovement.net)
+- **Shariah Standards**: AAOIFI guidelines
 
-### Deploy Frontend to GitHub Pages
-
-1. **Update API endpoint** in `app.js`:
-```javascript
-const API_BASE_URL = 'https://your-heroku-app.herokuapp.com/api';
-```
-
-2. **Push to GitHub**
-```bash
-git add .
-git commit -m "Deploy to GitHub Pages"
-git push origin main
-```
-
-3. **Enable GitHub Pages** in repository settings
-
-## Getting Finnhub API Key
-
-1. Visit [Finnhub.io](https://finnhub.io/)
-2. Sign up for a free account
-3. Get your API key from the dashboard
-4. Free tier includes 60 API calls/minute
-
-## Cron Jobs
-
-The application runs automated jobs:
-
-- **Daily Stock Update**: 6 PM EST (after market close)
-- **Weekly Cleanup**: Sunday 2 AM (removes old non-compliant stocks)
-
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please:
-
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Submit a pull request
 
-## Disclaimer
+## 📝 License
 
-This tool provides information for educational purposes only. Always consult with qualified Islamic scholars and financial advisors before making investment decisions. Stock data is provided by Finnhub and may have delays.
+MIT License - feel free to use this for your own projects!
 
-## License
+## 🙏 Acknowledgments
 
-MIT License - see LICENSE file for details
+- Yahoo Finance for providing free financial data
+- BDS Movement for maintaining the boycott list
+- AAOIFI for Shariah compliance standards
+- The `yahoo-finance2` library maintainers
 
-## Support
+## ⚠️ Disclaimer
 
-For issues and questions:
-- Open an issue on GitHub
-- Email: support@halalstocks.com
-
-## Acknowledgments
-
-- Shariah screening based on AAOIFI standards
-- BDS list maintained by BDS Movement
-- Stock data provided by Finnhub
-- Built with ❤️ for the Muslim community
+This tool is for informational purposes only. Always consult with a qualified Islamic scholar or Shariah advisor before making investment decisions. The screening criteria are based on general AAOIFI guidelines but may not reflect all scholarly opinions.
 
 ---
 
-**Free Palestine** 🇵🇸
+**Free Palestine** 🇵🇸 | **Boycott Israeli Products** | **Invest Ethically**

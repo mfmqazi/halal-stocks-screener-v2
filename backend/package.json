@@ -1,7 +1,7 @@
 {
-  "name": "halal-stocks-backend",
-  "version": "1.0.0",
-  "description": "Backend API for Halal Stocks screener with Finnhub integration",
+  "name": "halal-stocks-backend-v2",
+  "version": "2.0.0",
+  "description": "Backend API for Halal Stocks screener with Yahoo Finance integration",
   "main": "server.js",
   "type": "module",
   "scripts": {

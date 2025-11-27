@@ -1,5 +1,7 @@
-import yahooFinance from 'yahoo-finance2';
+import YahooFinance from 'yahoo-finance2';
 import blacklistService from './blacklistService.js';
+
+const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] });
 
 class YahooFinanceService {
     // Get comprehensive stock data
